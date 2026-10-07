@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f2f7">
+<title>Meu Calendário — 5 Out a 5 Jan</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{--bg:#faf7fa;--card:#fff;--text:#332d34;--muted:#817680;--border:#e8dfe8;--accent:#b979a5;--accentbg:#f2ddea}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:620px;margin:auto;padding:20px 14px 32px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+h1{font-size:21px;margin:0 0 3px}.sub{font-size:13px;color:var(--muted)}
+button{font:inherit}#clear{border:1px solid var(--border);background:white;border-radius:10px;padding:9px 12px;color:var(--text)}
+.progress{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:18px}
+.progressrow{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px}
+.bar{height:8px;background:#eee6ed;border-radius:20px;overflow:hidden}.fill{height:100%;width:0;background:var(--accent);border-radius:20px;transition:.2s}
+.month{margin-bottom:24px}.month h2{font-size:17px;margin:0 0 9px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.dow{text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:3px 0}
+.day{min-height:52px;border:1px solid var(--border);background:var(--card);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text);cursor:pointer}
+.day .num{font-size:13px}.day .mark{font-size:17px;line-height:17px;color:var(--muted)}.day.done{background:var(--accentbg);border-color:#d8b8d0}.day.done .mark{color:var(--accent);font-weight:800}
+.day.today{outline:2px solid var(--accent);outline-offset:1px}
+@media(max-width:360px){main{padding:16px 9px}.grid{gap:3px}.day{min-height:48px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>Meu calendário ✓</h1><div class="sub">5 de outubro de 2026 → 5 de janeiro de 2027</div></div>
+<button id="clear">Limpar</button>
+</header>
+<section class="progress">
+<div class="progressrow"><span>Progresso</span><strong id="count">0 / 93</strong></div>
+<div class="bar"><div class="fill" id="fill"></div></div>
+</section>
+<div id="months"></div>
+</main>
+<script>
+const start=new Date(Date.UTC(2026,9,5)), end=new Date(Date.UTC(2027,0,5));
+const names=["Outubro 2026","Novembro 2026","Dezembro 2026","Janeiro 2027"];
+const labels=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const KEY="meu-calendario-5out-5jan-v1";
+let state=new Set(JSON.parse(localStorage.getItem(KEY)||"[]"));
+const pad=n=>String(n).padStart(2,"0");
+const key=d=>`${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+function daysInMonth(y,m){return new Date(Date.UTC(y,m+1,0)).getUTCDate()}
+function save(){localStorage.setItem(KEY,JSON.stringify([...state]))}
+function render(){
+ const months=document.getElementById("months"); months.innerHTML="";
+ for(let m=9;m<=12;m++){
+  const y=m===9?2026:(m===12?2027:2026), title=names[m-9];
+  const sec=document.createElement("section"); sec.className="month";
+  sec.innerHTML=`<h2>${title}</h2><div class="grid">${labels.map(x=>`<div class="dow">${x}</div>`).join("")}</div>`;
+  const grid=sec.querySelector(".grid"), first=new Date(Date.UTC(y,m,1)).getUTCDay(), total=daysInMonth(y,m);
+  for(let i=0;i<first;i++) grid.appendChild(document.createElement("div"));
+  for(let n=1;n<=total;n++){
+   const d=new Date(Date.UTC(y,m,n)); if(d<start||d>end) continue;
+   const k=key(d), b=document.createElement("button"); b.className="day"+(state.has(k)?" done":"");
+   b.type="button"; b.innerHTML=`<span class="num">${n}</span><span class="mark">${state.has(k)?"✓":"☐"}</span>`;
+   const now=new Date(); if(k===key(new Date(Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())))) b.classList.add("today");
+   b.onclick=()=>{state.has(k)?state.delete(k):state.add(k);save();render()}; grid.appendChild(b);
+  }
+  months.appendChild(sec);
+ }
+ document.getElementById("count").textContent=`${state.size} / 93`;
+ document.getElementById("fill").style.width=`${Math.round(state.size/93*100)}%`;
+}
+document.getElementById("clear").onclick=()=>{if(confirm("Apagar todas as marcações?")){state.clear();save();render()}};
+render();
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}</script>
+</body>
+</html>
