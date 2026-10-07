@@ -1,0 +1,9 @@
+{
+  "name": "Meu Calendário",
+  "short_name": "Calendário",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#faf7fa",
+  "theme_color": "#f7a8c4",
+  "icons": []
+}
